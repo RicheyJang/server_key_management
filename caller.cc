@@ -43,7 +43,7 @@ void from_json(const nlohmann::json& j, key_info_t& k) {
     j.at("timeout").get_to(k.timeout);
 }
 
-uint send_request(HttpRequest* req, HttpResponse* resp) {
+int send_request(HttpRequest* req, HttpResponse* resp) {
     if(req == NULL || resp == NULL)
         return ERR_WRONG_PARAM;
     return http_client_send(cli, req, resp);
@@ -68,7 +68,7 @@ uint call_key_api(std::string path, Json body, key_info_t *key) {
     HttpResponse resp;
     int ret = send_request(&req, &resp);
     if(ret != 0) {
-        return ret;
+        return ret < 0? -ret : ret;
     }
 
     // 解析
@@ -112,7 +112,7 @@ uint init_client(const char* ca_path, const char* ca_file, const char* crt_file,
     int ret = http_client_new_ssl_ctx(cli, &ssl_opt);
     if(ret != 0) {
         hloge("Cert Error: %d : %s", ret, http_client_strerror(ret));
-        return ret;
+        return ret < 0? -ret : ret;
     }
     return 0;
 }
