@@ -3,9 +3,10 @@
 #include "hv/http_client.h"
 using namespace hv;
 
-#define ERR_WRONG_PARAM 100
-#define ERR_KEY_INVALID 200
-#define ERR_UNEXPECTED 500
+#define ERR_UNEXPECTED 20000
+#define ERR_WRONG_PARAM 20001
+#define ERR_KEY_INVALID 20002
+#define ERR_JSON_INVALID 20003
 
 
 /*
@@ -74,9 +75,14 @@ uint call_key_api(std::string path, Json body, key_info_t *key) {
     // 解析
     try {
         Json rsp = Json::parse(resp.Body());
-        *key = rsp.get<key_info_t>();
+        ret = rsp.at("code").get<int>();
+        if(ret != 0) {
+            hloge("Error From Server: %d : %s", ret, rsp.at("msg").get<std::string>().c_str());
+            return ret < 0? -ret : ret;
+        }
+        *key = rsp.at("key").get<key_info_t>();
     } catch(...) {
-        return ERR_KEY_INVALID;
+        return ERR_JSON_INVALID;
     }
     if(!key->check_key_valid())
         return ERR_KEY_INVALID;
