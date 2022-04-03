@@ -2,6 +2,7 @@
 #include <typelib.h>
 #include <mysql/plugin_encryption.h>
 #include <string.h>
+#include "api.h"
 typedef unsigned int uint;
 
 /*
@@ -22,14 +23,49 @@ static uint get_key_by_id_version(uint key_id, uint key_version,
   Settings ----------------------
 */
 static char* url;
+static char* ca_path;
+static char* ca_file;
+static char* crt_file;
+static char* key_file;
+static char* log_file;
 
 static MYSQL_SYSVAR_STR(url, url,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "URL of the remote key management server, format: host:port.",
   NULL, NULL, "127.0.0.1:7709");
 
+static MYSQL_SYSVAR_STR(ca_path, ca_path,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Path of the directory containing CA certificates in PEM format.",
+  NULL, NULL, "");
+
+static MYSQL_SYSVAR_STR(ca_file, ca_file,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Path and name of the file of CA certificate in PEM format.",
+  NULL, NULL, "");
+
+static MYSQL_SYSVAR_STR(crt_file, crt_file,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Path and name of the file of client certificate in PEM format.",
+  NULL, NULL, "");
+
+static MYSQL_SYSVAR_STR(key_file, key_file,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Path and name of the file of client private key in PEM format.",
+  NULL, NULL, "");
+
+static MYSQL_SYSVAR_STR(log_file, log_file,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Path and name of the operation log file.",
+  NULL, NULL, "");
+
 static struct st_mysql_sys_var* settings[] = {
   MYSQL_SYSVAR(url),
+  MYSQL_SYSVAR(ca_path),
+  MYSQL_SYSVAR(ca_file),
+  MYSQL_SYSVAR(crt_file),
+  MYSQL_SYSVAR(key_file),
+  MYSQL_SYSVAR(log_file),
   NULL
 };
 
@@ -89,11 +125,19 @@ static uint ctx_get_length(uint slen, uint key_id,
   Initial Functions -----------------
 */
 static int server_key_management_plugin_init(void *p) {
-    return 0;
+  if(log_file != NULL && strlen(log_file) > 0) { // 设置日志文件路径
+    hlog_set_file(log_file);
+  } else { // 关闭日志
+    hlog_disable();
+  }
+  if(init_client(ca_path, ca_file, crt_file, key_file))
+    return -1;
+  return 0;
 }
 
 static int server_key_management_plugin_deinit(void *p) {
-    return 0;
+  del_client();
+  return 0;
 }
 
 /*
