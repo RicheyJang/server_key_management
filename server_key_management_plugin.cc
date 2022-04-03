@@ -1,9 +1,7 @@
 #include <my_global.h>
-#include <typelib.h>
 #include <mysql/plugin_encryption.h>
 #include <string.h>
 #include "api.h"
-typedef unsigned int uint;
 
 /*
   Key Management --------------
@@ -19,17 +17,17 @@ static uint get_key_by_id_version(uint key_id, uint key_version,
     return ENCRYPTION_KEY_VERSION_INVALID;
 }
 
-/*
+/* 
   Settings ----------------------
 */
-static char* url;
+char* url_of_server;
 static char* ca_path;
 static char* ca_file;
 static char* crt_file;
 static char* key_file;
 static char* log_file;
 
-static MYSQL_SYSVAR_STR(url, url,
+static MYSQL_SYSVAR_STR(url, url_of_server,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "URL of the remote key management server, format: host:port.",
   NULL, NULL, "127.0.0.1:7709");
