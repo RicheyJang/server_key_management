@@ -9,13 +9,16 @@ using namespace hv;
 #define ERR_KEY_INVALID 20002
 #define ERR_JSON_INVALID 20003
 
+uint call_key_api(std::string path, std::string body, key_info_t *key);
 
+// 从密钥管理服务获取指定密钥信息
 uint from_server_get_key_info(uint key_id, uint key_version, key_info_t *key) {
     std::stringstream ss;
     ss<<"{\"id\": "<<key_id<<", \"version\": "<<key_version<<"}";
     return call_key_api("api/inner/key", ss.str(), key);
 }
 
+// 从密钥管理服务获取特定ID下的最新版本密钥
 uint from_server_get_latest_version_key(uint key_id, key_info_t *key) {
     std::stringstream ss;
     ss<<"{\"id\": "<<key_id<<"}";
@@ -136,7 +139,7 @@ uint init_client(const char* ca_path, const char* ca_file, const char* crt_file,
     }
     int ret = http_client_new_ssl_ctx(cli, &ssl_opt);
     if(ret != 0) {
-        hloge("init_client: Cert Error: %d : %s", ret, http_client_strerror(ret));
+        hloge("init_client: Cert Error: %d | %s", ret, hv_strerror(ret));
         return ret < 0? -ret : ret;
     }
     return 0;

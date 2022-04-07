@@ -7,14 +7,31 @@
   Key Management --------------
 */
 static uint get_key_latest_version(uint key_id) {
-    // TODO implement me
+  // TODO better
+  key_info_t key;
+  uint ret = from_server_get_latest_version_key(key_id, &key);
+  if(ret != 0)
     return ENCRYPTION_KEY_VERSION_INVALID;
+  else
+    return key.version;
 }
 
 static uint get_key_by_id_version(uint key_id, uint key_version,
        unsigned char* dstbuf, uint *buflen) {
-    // TODO implement me
+  // TODO better
+  key_info_t key;
+  uint ret = from_server_get_key_info(key_id, key_version, &key);
+  if(ret != 0)
     return ENCRYPTION_KEY_VERSION_INVALID;
+  
+  if(*buflen < key.length)
+    return ENCRYPTION_KEY_BUFFER_TOO_SMALL;
+
+  *buflen= key.length;
+  if(dstbuf)
+    memcpy(dstbuf, key.key, key.length);
+  
+  return 0;
 }
 
 /* 
@@ -169,6 +186,6 @@ maria_declare_plugin(file_key_management)
     NULL,   /* status variables */
     settings,
     "1.0",
-    MariaDB_PLUGIN_MATURITY_EXPERIMENTAL // TODO to stable
+    MariaDB_PLUGIN_MATURITY_STABLE // TODO to stable
 }
 maria_declare_plugin_end;

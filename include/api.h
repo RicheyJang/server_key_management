@@ -4,6 +4,7 @@
 #include "string"
 #include "time.h"
 #include "hv/hlog.h"
+#include "hv/herr.h"
 typedef unsigned int uint;
 #define MAX_KEY_LENGTH 32
 
@@ -35,6 +36,7 @@ typedef struct key_info_t {
 unsigned int init_client(const char* ca_path, const char* ca_file, const char* crt_file, const char* key_file);
 unsigned int del_client();
 
-
+uint from_server_get_key_info(uint key_id, uint key_version, key_info_t *key);
+uint from_server_get_latest_version_key(uint key_id, key_info_t *key);
 
 #endif
