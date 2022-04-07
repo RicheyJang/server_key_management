@@ -1,5 +1,6 @@
 #include "api.h"
 #include <string.h>
+#include <sstream>
 #include "hv/http_client.h"
 using namespace hv;
 
@@ -9,17 +10,16 @@ using namespace hv;
 #define ERR_JSON_INVALID 20003
 
 
-uint from_server_get_key_info(uint key_id, uint key_verison, key_info_t *key) {
-    Json req;
-    req["id"] = key_id;
-    req["version"] = key_verison;
-    return call_key_api("api/inner/key", req.dump(), key);
+uint from_server_get_key_info(uint key_id, uint key_version, key_info_t *key) {
+    std::stringstream ss;
+    ss<<"{\"id\": "<<key_id<<", \"version\": "<<key_version<<"}";
+    return call_key_api("api/inner/key", ss.str(), key);
 }
 
 uint from_server_get_latest_version_key(uint key_id, key_info_t *key) {
-    Json req;
-    req["id"] = key_id;
-    return call_key_api("api/inner/version", req.dump(), key);
+    std::stringstream ss;
+    ss<<"{\"id\": "<<key_id<<"}";
+    return call_key_api("api/inner/version", ss.str(), key);
 }
 
 /*
