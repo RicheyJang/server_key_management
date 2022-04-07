@@ -9,6 +9,19 @@ using namespace hv;
 #define ERR_JSON_INVALID 20003
 
 
+uint from_server_get_key_info(uint key_id, uint key_verison, key_info_t *key) {
+    Json req;
+    req["id"] = key_id;
+    req["version"] = key_verison;
+    return call_key_api("api/inner/key", req.dump(), key);
+}
+
+uint from_server_get_latest_version_key(uint key_id, key_info_t *key) {
+    Json req;
+    req["id"] = key_id;
+    return call_key_api("api/inner/version", req.dump(), key);
+}
+
 /*
     Underlying Support Functions
 */
@@ -50,9 +63,11 @@ int send_request(HttpRequest* req, HttpResponse* resp) {
     return http_client_send(cli, req, resp);
 }
 
-uint call_key_api(std::string path, Json body, key_info_t *key) {
-    if(key == NULL)
+uint call_key_api(std::string path, std::string body, key_info_t *key) {
+    if(key == NULL) {
+        hloge("call_key_api: key is null");
         return ERR_WRONG_PARAM;
+    }
     // 创建请求
     HttpRequest req;
     req.method = HTTP_POST;
@@ -62,13 +77,14 @@ uint call_key_api(std::string path, Json body, key_info_t *key) {
     req.headers["Connection"] = "keep-alive";
     req.headers["Content-Type"] = "application/json; charset=utf-8";
     req.headers["user-agent"] = "server_key_manangement plugin v1.0";
-    req.body = body.dump();
+    req.body = body;
     req.timeout = 10;
 
     // 发送请求
     HttpResponse resp;
     int ret = send_request(&req, &resp);
     if(ret != 0) {
+        hloge("call_key_api: send_request failed: %d | %s", ret, http_client_strerror(ret));
         return ret < 0? -ret : ret;
     }
 
@@ -82,10 +98,13 @@ uint call_key_api(std::string path, Json body, key_info_t *key) {
         }
         *key = rsp.at("key").get<key_info_t>();
     } catch(...) {
+        hloge("call_key_api: parse json failed");
         return ERR_JSON_INVALID;
     }
-    if(!key->check_key_valid())
+    if(!key->check_key_valid()) {
+        hloge("call_key_api: got invalid key");
         return ERR_KEY_INVALID;
+    }
     return 0;
 }
 
@@ -99,7 +118,7 @@ uint init_client(const char* ca_path, const char* ca_file, const char* crt_file,
     // 创建Client
     cli = http_client_new(NULL, 7709, 1);
     if(cli == NULL) {
-        hloge("Error: http_client_new got null");
+        hloge("init_client: http_client_new got null");
         return ERR_UNEXPECTED;
     }
 
@@ -112,12 +131,12 @@ uint init_client(const char* ca_path, const char* ca_file, const char* crt_file,
     ssl_opt.crt_file = format_path(crt_file);
     ssl_opt.key_file = format_path(key_file);
     if(ssl_opt.crt_file == NULL || ssl_opt.key_file == NULL) {
-        hlogw("The Path of Cert or Key File has not yet been set.");
+        hlogw("init_client: The Path of Cert or Key File has not yet been set.");
         return ERR_WRONG_PARAM;
     }
     int ret = http_client_new_ssl_ctx(cli, &ssl_opt);
     if(ret != 0) {
-        hloge("Cert Error: %d : %s", ret, http_client_strerror(ret));
+        hloge("init_client: Cert Error: %d : %s", ret, http_client_strerror(ret));
         return ret < 0? -ret : ret;
     }
     return 0;
