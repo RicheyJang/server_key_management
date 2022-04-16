@@ -38,6 +38,7 @@ static uint get_key_by_id_version(uint key_id, uint key_version,
   Settings ----------------------
 */
 char* url_of_server;
+char* instance_identifier;
 static char* ca_path;
 static char* ca_file;
 static char* crt_file;
@@ -48,6 +49,11 @@ static MYSQL_SYSVAR_STR(url, url_of_server,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
   "URL of the remote key management server, format: host:port.",
   NULL, NULL, "127.0.0.1:7709");
+
+static MYSQL_SYSVAR_STR(instance, instance_identifier,
+  PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
+  "Identifier of the selected key management instance.",
+  NULL, NULL, "default");
 
 static MYSQL_SYSVAR_STR(ca_path, ca_path,
   PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
@@ -76,6 +82,7 @@ static MYSQL_SYSVAR_STR(log_file, log_file,
 
 static struct st_mysql_sys_var* settings[] = {
   MYSQL_SYSVAR(url),
+  MYSQL_SYSVAR(instance),
   MYSQL_SYSVAR(ca_path),
   MYSQL_SYSVAR(ca_file),
   MYSQL_SYSVAR(crt_file),

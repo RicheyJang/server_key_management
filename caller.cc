@@ -31,6 +31,7 @@ uint from_server_get_latest_version_key(uint key_id, key_info_t *key) {
 
 static http_client_t *cli = NULL; // 客户端
 extern char* url_of_server;
+extern char* instance_identifier;
 
 void to_json(nlohmann::json& j, const key_info_t& k) {
     j = Json{};
@@ -80,6 +81,7 @@ uint call_key_api(std::string path, std::string body, key_info_t *key) {
     req.headers["Connection"] = "keep-alive";
     req.headers["Content-Type"] = "application/json; charset=utf-8";
     req.headers["user-agent"] = "server_key_manangement plugin v1.0";
+    req.headers["identifier"] = std::string(instance_identifier);
     req.body = body;
     req.timeout = 10;
 
