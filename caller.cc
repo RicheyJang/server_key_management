@@ -57,7 +57,10 @@ void from_json(const nlohmann::json& j, key_info_t& k) {
         k.key[j]=from_hex(hex[i])*16+from_hex(hex[i+1]);
     }
     j.at("length").get_to(k.length);
-    j.at("algorithm").get_to(k.algorithm);
+    std::string algorithmStr;
+    j.at("algorithm").get_to(algorithmStr);
+    // 将algorithmStr转换为algorithm
+    k.setAlgorithm(algorithmStr);
     j.at("timeout").get_to(k.timeout);
 }
 

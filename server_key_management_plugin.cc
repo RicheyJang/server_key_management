@@ -1,15 +1,23 @@
 #include <my_global.h>
-#include <mysql/plugin_encryption.h>
 #include <string.h>
 #include "api.h"
 
 /*
   Key Management --------------
 */
-static uint get_key_latest_version(uint key_id) {
+static uint get_key_info(uint key_id, uint key_version, key_info_t *key) {
   // TODO better
+  return from_server_get_key_info(key_id, key_version, key);
+}
+
+static uint get_latest_key_info(uint key_id, key_info_t *key) {
+  // TODO better
+  return from_server_get_latest_version_key(key_id, key);
+}
+
+static uint get_key_latest_version(uint key_id) {
   key_info_t key;
-  uint ret = from_server_get_latest_version_key(key_id, &key);
+  uint ret = get_latest_key_info(key_id, &key);
   if(ret != 0)
     return ENCRYPTION_KEY_VERSION_INVALID;
   else
@@ -18,9 +26,8 @@ static uint get_key_latest_version(uint key_id) {
 
 static uint get_key_by_id_version(uint key_id, uint key_version,
        unsigned char* dstbuf, uint *buflen) {
-  // TODO better
   key_info_t key;
-  uint ret = from_server_get_key_info(key_id, key_version, &key);
+  uint ret = get_key_info(key_id, key_version, &key);
   if(ret != 0)
     return ENCRYPTION_KEY_VERSION_INVALID;
   
@@ -94,26 +101,26 @@ static struct st_mysql_sys_var* settings[] = {
 /*
   Encryption Functions -----------------
 */
-#ifndef HAVE_EncryptAes128Ctr
-#define MY_AES_CTR MY_AES_CBC
-#endif
-#ifndef HAVE_EncryptAes128Gcm
-#define MY_AES_GCM MY_AES_CTR
-#endif
 
 static inline enum my_aes_mode mode(uint key_id, uint key_version, int flags) {
+  key_info_t key;
+  uint ret = get_key_info(key_id, key_version, &key);
+  if(ret != 0) // something goes wrong
+    return MY_AES_CBC;
   /*
-    TODO get the Algorithm By Key Info
-
-    old: 
-
     If encryption_algorithm is AES_CTR then
       if no-padding, use AES_CTR
       else use AES_GCM (like CTR but appends a "checksum" block)
     else
       use AES_CBC
   */
-  return MY_AES_CBC;
+  if (key.algorithm == MY_AES_GCM)
+    if (flags & ENCRYPTION_FLAG_NOPAD)
+      return MY_AES_CTR;
+    else
+      return MY_AES_GCM;
+  else
+    return key.algorithm;
 }
 
 static uint ctx_size(uint key_id, uint key_version) {
@@ -193,6 +200,6 @@ maria_declare_plugin(file_key_management)
     NULL,   /* status variables */
     settings,
     "1.0",
-    MariaDB_PLUGIN_MATURITY_STABLE // TODO to stable
+    MariaDB_PLUGIN_MATURITY_STABLE
 }
 maria_declare_plugin_end;
