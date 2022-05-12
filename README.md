@@ -33,8 +33,8 @@ server_key_management_log_file = /var/log/server_test/plugin.log # the path of l
 
 1. install [libhv](https://github.com/ithewei/libhv)
 
-2. You can put this repository source code into the `plugins` directory of the MariaDB source code, and `cmake`.
+2. You can put this repository source code into the `plugin` directory of the MariaDB source code, and `cmake`.
 
-3. Enter `plugins/server_key_management` and `make`, get the dynamic link library file.
+3. Enter `plugin/server_key_management` and `make`, get the dynamic link library file.
 
 And then, Install it just like Linux.
