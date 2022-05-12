@@ -28,7 +28,7 @@ typedef struct key_info_t {
         return time(0) > timeout;
     }
     bool check_key_valid() {
-        if(id == 0 || version == 0 || length == 0 || timeout <= 0 || length > MAX_KEY_LENGTH)
+        if(id == 0 || version == 0 || length == 0 || length > MAX_KEY_LENGTH)
             return false;
         bool all_zero = true;
         for(int i=0;i<MAX_KEY_LENGTH;i++) {
